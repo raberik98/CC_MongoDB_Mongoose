@@ -4,82 +4,153 @@
 import express from "express";
 import mongoose from "mongoose";
 import Question from "./models/questions.js"
+// import env from "dotenv"
+// import Asd123 from "./models/asd123.js"
 const app = express()
-app.use(express.json());
 
-app.get("/api/v1/getQuestions", (req,res) => {
-    Question.find({}).then((data) => {
-        let [e1,e2,e3] = data
-        res.json(e2)
-    }).catch((err) => {
-        console.log(err);
-        res.status(500).json({message:"Error occured"})
-    })
+// const {CONSTRING} = env()
+
+app.use(express.json())
+app.use(express.text())
+
+app.use("/", (req,res,next) => {
+    res.setHeader('Access-Control-Allow-Origin', 'http://127.0.0.1:4000');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    next()
 })
 
-app.get("/api/v1/getQuestionById/:_id", async (req,res) => {
+let backupData = []
+
+app.post("/api/v1/addNewQuestion", async (req,res) => {
     try {
-        let data = await Question.findById(req.params._id)
+        await Question.create(req.body)
+        res.json({message: "Successfully added a new question"})
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({message: "Some error occured"})
+    }
+})
+
+app.post("/api/v2/addNewQuestion", async (req,res,next) => {
+    try {
+        let newQuestion = new Question()
+        newQuestion.userName = req.body.userName
+        newQuestion.questionTitle = req.body.questionTitle
+        await newQuestion.save()
+        res.json({message: "Successfully added a new question"})
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({message: "Some error occured"})
+    }
+})
+
+app.get("/api/v1/getAllData", async (req,res) => {
+    try {
+        let data = await Question.find({userName: "Erik1"})
         res.json(data)
     } catch (error) {
         console.log(error);
-        res.status(500).json({message:"Error occured"})
-    }    
+        res.status(500).json({message: "Some error occured"})
+    }
 })
 
-app.post("/api/v2/addQuestion", async (req,res) => {
+
+app.get("/api/v1/getDataById/:id", async (req,res) => {
     try {
-        let newData = new Question()
-        newData.userName = "New user"
-        newData.questionTitle = "new Question title"
-        let data = await newData.save()
+        let data = await Question.findById(req.params.id)
         res.json(data)
     } catch (error) {
         console.log(error);
-        res.status(500).json({message:"Error occured"})
-    }    
+        res.status(500).json({message: "Some error occured"})
+    }
 })
 
-app.put("/api/v1/editTitle/:_id", async (req,res) => {
+app.get("/api/v1/getDataParameters", async (req,res) => {
     try {
-        await Question.findByIdAndUpdate(req.params._id, {userName: req.body.userName})
-        res.status(200).json({message:"Update succesfull"})
+        let data = await Question.findOne({userName: "Erik4"})
+        res.json(data)
     } catch (error) {
         console.log(error);
-        res.status(500).json({message:"Error occured"})
-    } 
+        res.status(500).json({message: "Some error occured"})
+    }
+})
+
+app.put("/api/v1/editQuestion/:id", async (req,res) => {
+    try {
+        let userName = req.body.userName
+        let questionTitle = req.body.questionTitle
+        await Question.findByIdAndUpdate(req.params.id, { userName: userName, questionTitle: questionTitle })
+        res.json({message: "Edit have been successful"})
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({message: "Some error occured"})
+    }
 })
 
 app.put("/api/v1/addAnswer/:id", async (req,res) => {
     try {
-        let data = await Question.findById(req.params.id)
-        // data.answers = [...data.answers, req.body.answer]
-        data.answers.push(req.body.answer)
-        await data.save()
-        res.status(200).json({message:"Update succesfull"})
+        let newAnswer = req.body.newAnswer
+        let editThisQuestion = await Question.findById(req.params.id)
+        // editThisQuestion.answers = [...editThisQuestion.answers, newAnswer]
+        editThisQuestion.answers.push(newAnswer)
+        let response = await editThisQuestion.save()
+        res.json(response)
     } catch (error) {
         console.log(error);
-        res.status(500).json({message:"Error occured"})
+        res.status(500).json({message: "Some error occured"})
     }
 })
 
-app.delete("/api/v1/deleteQuestion/:id", async (req,res) => {
+app.put("/api/v2/addAnswer/:id", async (req,res) => {
+    try {
+        let response = await editThisQuestion.findByIdAndUpdate(req.params.id, {$push: { answers: req.body.newAnswer }})
+        //Reminder,check the syntax
+        res.json(response)
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({message: "Some error occured"})
+    }
+})
+
+app.delete("/api/v1/deleteQuestion/:id", async (req, res) => {
     try {
         await Question.findByIdAndDelete(req.params.id)
-        res.status(200).json({message:"Delete was successful"})
+        res.json({message: "Delete was successful!"})
     } catch (error) {
         console.log(error);
-        res.status(500).json({message:"Error occured"})
+        res.status(500).json({message: "Some error occured"})
     }
 })
 
-app.post("/api/v1/addQuestion", async (req,res) => {
+app.get("/api/v1/createABackup", async (req,res) => {
     try {
-        const data = req.body
-        await Question.create(data)
-        res.json({message: "New data have been registered"})
+        backupData = await Question.find()
+        res.send("Ok backup is ready")
     } catch (error) {
-        res.status(500).json({message:"Error occured"})
+        console.log(error);
+        res.status(500).json({message: "Some error occured"})   
+    }
+})
+
+app.delete("/api/v1/clearCollection", async (req,res) => {
+    try {
+        await Question.deleteMany()
+        res.send("Delete was successful")
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({message: "Some error occured"})
+    }
+})
+
+app.post("/api/v1/restoreBackup", async (req,res) => {
+    try {
+        let newData =  backupData.map((item) => ( {userName: item.userName, questionTitle: item.questionTitle, answers: item.answers} ))
+        backupData = await Question.create(newData)
+        res.send("Backup data restored")
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({message: "Some error occured"})   
     }
 })
 
@@ -87,9 +158,9 @@ app.post("/api/v1/addQuestion", async (req,res) => {
 
 
 
-mongoose.connect("mongodb://localhost:27017/test2").then(() => {
-    console.log("Connection to MongoDB successful");
-    app.listen(3001, ()=> {
+mongoose.connect("mongodb://127.0.0.1:27017/test2").then(() => {
+    console.log("Connection to the database have been successful!");
+    app.listen(3001, () => {
         console.log("App is running at port: 3001");
     })
 }).catch((err) => {
