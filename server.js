@@ -4,11 +4,14 @@
 import express from "express";
 import mongoose from "mongoose";
 import Question from "./models/questions.js"
-// import env from "dotenv"
-// import Asd123 from "./models/asd123.js"
-const app = express()
+import env from "dotenv"
+env.config()
 
-// const {CONSTRING} = env()
+//This is in the .env file:
+//CONSTRING="mongodb://127.0.0.1:27017/test2"
+
+
+const app = express()
 
 app.use(express.json())
 app.use(express.text())
@@ -18,6 +21,11 @@ app.use("/", (req,res,next) => {
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
     next()
+})
+
+app.post("/", (req,res) => {
+    console.log(req.body);
+    res.send(req.body)
 })
 
 let backupData = []
@@ -104,8 +112,7 @@ app.put("/api/v1/addAnswer/:id", async (req,res) => {
 
 app.put("/api/v2/addAnswer/:id", async (req,res) => {
     try {
-        let response = await editThisQuestion.findByIdAndUpdate(req.params.id, {$push: { answers: req.body.newAnswer }})
-        //Reminder,check the syntax
+        let response = await Question.findByIdAndUpdate(req.params.id, { $push: { answers: req.body.newAnswer } },)
         res.json(response)
     } catch (error) {
         console.log(error);
@@ -158,7 +165,7 @@ app.post("/api/v1/restoreBackup", async (req,res) => {
 
 
 
-mongoose.connect("mongodb://127.0.0.1:27017/test2").then(() => {
+mongoose.connect(process.env.CONSTRING).then(() => {
     console.log("Connection to the database have been successful!");
     app.listen(3001, () => {
         console.log("App is running at port: 3001");
