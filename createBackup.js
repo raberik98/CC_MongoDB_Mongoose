@@ -1,27 +1,24 @@
 import mongoose from "mongoose";
-import QuestionsModel from "./models/Questions.model.js";
+import CountryModel from "./models/Country.Model.js";
 import fs from "fs/promises"
-import CONSTRING from "./env.js"
+import env from "dotenv";
+env.config();
 
 async function Main() {
-    try {
-        await mongoose.connect(CONSTRING)
-        console.log("Connected to database!");
+    await mongoose.connect(process.env.CONSTRING)
+    console.log("Connected to database");
 
-        const data = await QuestionsModel.find()
-        console.log("Data requested from database!");
+    const allData = await CountryModel.find()
+    console.log("Requested all the data from the database!");
 
-        await fs.writeFile("./backup/backupQuestions.json", JSON.stringify(data), "utf-8")
-        console.log("Saved data to file!");
+    await fs.writeFile("./backup/backupCountry.json", JSON.stringify(allData), "utf-8")
+    console.log("Backup file successfully created!");
 
-        await mongoose.disconnect()
-        console.log("Disconnected from the database!");
+    await mongoose.disconnect()
+    console.log("Disconnected from the database!");
 
-        console.log("Yaaay success!");
-
-    } catch (error) {
-        console.log(`---ERROR: ${error}`);   
-    }
+    console.log("Script shuts down");
 }
 
 Main()
+

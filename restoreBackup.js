@@ -1,42 +1,51 @@
 import mongoose from "mongoose";
-import QuestionsModel from "./models/Questions.model.js";
+import CountryModel from "./models/Country.Model.js";
 import fs from "fs/promises"
-import CONSTRING from "./env.js"
+import env from "dotenv";
+env.config();
 
 async function Main() {
-    try {
-        await mongoose.connect(CONSTRING)
-        console.log("Connected to database!");
+    await mongoose.connect(process.env.CONSTRING)
+    console.log("Connected to database");
 
-        const unparsedData = await fs.readFile("./backup/backupQuestions.json", "utf-8")
-        console.log("Read backup from file!");
+    await CountryModel.deleteMany()
+    console.log("Successfully cleared the database!");
 
-        const data = JSON.parse(unparsedData)
-        console.log("Parsed the data!");
+    const unparsedData = await fs.readFile("./backup/backupCountry.json")
+    console.log("Successfully read the backup JSON file!");
 
-        const editedData = data.map((nextData) => {
-            return {
-                title: nextData.title,
-                description: nextData.description,
-                date: nextData.date,
-                answers: nextData.answers.map(nextAnswer => ( { answerText: nextAnswer.answerText, date: nextAnswer.date} ))
-            }
-        })
-        console.log("Edited the data!");
+    const parsedData = JSON.parse(unparsedData)
+    console.log("Successsfully parsed the previously read data!");
 
-        await QuestionsModel.deleteMany()
-        console.log("Cleared the database!");
+    const formatedData = parsedData.map((nextElement) => {
+        const returnThis = {
+            name: nextElement.name,
+            callingCode: nextElement.callingCode,
+            flag: {
+                small: nextElement.flag.small,
+                medium: nextElement.flag.medium,
+                large: nextElement.flag.large
+            },
+            comments: nextElement.comments,
+        }
 
-        await QuestionsModel.create(editedData)
-        console.log("Restored backup!");
+        if (nextElement.ruler) {
+            returnThis.ruler = nextElement.ruler
+        }
 
-        await mongoose.disconnect()
-        console.log("Disconnected from database!");
+        return returnThis
+    })
+    console.log("Successfully formated the backup data!");
 
-        console.log("Yaaay backup restored!");
-    } catch (error) {
-        console.log(`---ERROR: ${error}`);   
-    }
+    await CountryModel.create(formatedData)
+    console.log("Successfully retored the backup data!");
+
+
+    await mongoose.disconnect()
+    console.log("Disconnected from the database!");
+
+    console.log("Script shuts down");
 }
 
 Main()
+

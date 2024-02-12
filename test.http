@@ -1,46 +1,41 @@
 ###
-GET http://localhost:3000/api/v1/question
+GET http://localhost:3000/api/v1/country/all
 
 
 ###
-GET http://localhost:3000/api/v1/question/65ae4205564db211c2b9b144
+GET http://localhost:3000/api/v1/country/id/65c9f88172b7bc5528a97caf
 
 
 ###
-POST http://localhost:3000/api/v1/question
+GET http://localhost:3000/api/v1/country/callinCode/+36
+
+
+###
+POST http://localhost:3000/api/v1/country/comment/id/65c9f88172b7bc5528a97cbb
 Content-Type: application/json
 
 {
-    "title": "Do you like React?",
-    "description": "Any oppinions?"
+    "comment": "Fanni: human rights violations"
 }
 
 
 ###
-PATCH http://localhost:3000/api/v1/question/65ae43233e7d86757ca94127
+POST http://localhost:3000/api/v2/country/comment/id/65c9f88172b7bc5528a97cbb
 Content-Type: application/json
 
 {
-    "description": "Please share your thoughts. :) :)"
+    "comment": "Borat: Borat"
 }
 
 
 ###
-POST http://localhost:3000/api/v1/answer/65ae43233e7d86757ca94127
+PATCH http://localhost:3000/api/v2/country/setRuler/id/65c9f88172b7bc5528a97e0f
 Content-Type: application/json
 
 {
- "answer": "Irén: Piece of cake!"
+    "ruler": "Jácint Admiral General"
 }
 
 
 ###
-PATCH http://localhost:3000/api/v1/answer/65ae43233e7d86757ca94127/65ae465298b249e8d0cfa186
-Content-Type: application/json
-
-{
- "answer": "Viki: Hard stuff!"
-}
-
-###
-DELETE  http://localhost:3000/api/v1/question/65ae45285bab6fcc1bc7e738
+DELETE  http://localhost:3000/api/v2/country/id/65c9f88172b7bc5528a97e0f

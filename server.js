@@ -1,150 +1,116 @@
 import express from "express";
 import mongoose from "mongoose";
 import env from "dotenv";
+import CountryModel from "./models/Country.Model.js";
 // import CONSTRING from "./env.js";
 env.config();
-import QuestionsModel from "./models/Questions.model.js";
 
 const app = express();
 
 app.use(express.json());
 
-app.get("/api/v1/question", async (req, res) => {
+app.get("/api/v1/country/all", async (req,res) => {
   try {
-    const data = await QuestionsModel.find();
+      const allData = await CountryModel.find()
 
-    res.json(data);
+      res.json(allData)
   } catch (error) {
-    res
-      .json(500)
-      .json({ message: "Upsz something went wrong, please try again later!" });
+    console.log(error);
+    res.status(500).json({message: "Error occured, please try again later!"})
   }
-});
+})
 
-app.get("/api/v1/question/:_id", async (req, res) => {
+app.get("/api/v1/country/id/:_id", async (req,res) => {
   try {
-    const data = await QuestionsModel.findOne({_id: req.params._id});
-    // const data = await QuestionsModel.findById(req.params._id);
+      const selectedData = await CountryModel.findById(req.params._id)
 
-    res.json(data);
+      res.json(selectedData)
   } catch (error) {
-    res
-      .json(500)
-      .json({ message: "Upsz something went wrong, please try again later!" });
+    console.log(error);
+    res.status(500).json({message: "Error occured, please try again later!"})
   }
-});
+})
 
-app.post("/api/v1/question", async (req, res) => {
+app.get("/api/v1/country/callinCode/:ccode", async (req,res) => {
   try {
-    // const newData = {
-    //   title: req.body.title,
-    //   description: req.body.description
-    // }
-    // await QuestionsModel.create(newData)
+      const selectedData = await CountryModel.findOne({callingCode: req.params.ccode})
 
-    const newData = new QuestionsModel({
-      title: req.body.title,
-      description: req.body.description
-    })
-
-    await newData.save()
-
-    res.status(201).json({message: "Successfully added a question"})
+      res.json(selectedData)
   } catch (error) {
-    res
-      .json(500)
-      .json({ message: "Upsz something went wrong, please try again later!" });
+    console.log(error);
+    res.status(500).json({message: "Error occured, please try again later!"})
   }
-});
+})
 
-app.patch("/api/v1/question/:_id", async (req, res) => {
+
+app.post("/api/v1/country/comment/id/:_id", async (req,res) => {
   try {
-    
-    const editedData = await QuestionsModel.findOneAndUpdate(
-      {_id: req.params._id},
-      {description: req.body.description},
-      {new: true}
-    )
+      const editedData = await CountryModel.findByIdAndUpdate(
+        req.params._id, 
+        {$push: { comments: req.body.comment } },
+        { new: true }
+      )
 
-    res.status(200).json(editedData)
+      res.json(editedData)
   } catch (error) {
-    res
-      .json(500)
-      .json({ message: "Upsz something went wrong, please try again later!" });
+    console.log(error);
+    res.status(500).json({message: "Error occured, please try again later!"})
   }
-});
+})
 
-app.post("/api/v1/answer/:_id", async (req, res) => {
+
+
+app.post("/api/v2/country/comment/id/:_id", async (req,res) => {
   try {
-    
-    // const editedData = await QuestionsModel.findByIdAndUpdate(
-    //   req.params._id,
-    //   { $push: { answers: { answerText: req.body.answer } } },
-    //   {new: true}
-    // )
+      const editedData = await CountryModel.findById(req.params._id)
 
-    const editThis = await QuestionsModel.findById(req.params._id)
+      editedData.comments.push(req.body.comment)
 
-    editThis.answers.push({ answerText: req.body.answer })
+      await editedData.save()
 
-    await editThis.save()
-
-    res.status(200).json(editThis)
+      res.json(editedData)
   } catch (error) {
-    res
-      .json(500)
-      .json({ message: "Upsz something went wrong, please try again later!" });
+    console.log(error);
+    res.status(500).json({message: "Error occured, please try again later!"})
   }
-});
+})
 
-app.patch("/api/v1/answer/:questionId/:answerId", async (req, res) => {
+
+app.patch("/api/v2/country/setRuler/id/:_id", async (req,res) => {
   try {
-    
-    // const editedData = await QuestionsModel.findByIdAndUpdate(
-    //   req.params._id,
-    //   { $push: { answers: { answerText: req.body.answer } } },
-    //   {new: true}
-    // )
+      const editedData = await CountryModel.findOneAndUpdate(
+        {_id: req.params._id},
+        {ruler: req.body.ruler},
+        {new: true}
+      )
 
-    const editThis = await QuestionsModel.findById(req.params.questionId)
-
-    const editThisAnswer = editThis.answers.find((nextAnswer) => nextAnswer._id == req.params.answerId)
-
-    editThisAnswer.answerText = req.body.answer
-
-    await editThis.save()
-
-    res.status(200).json(editThis)
+      res.json(editedData)
   } catch (error) {
-    res
-      .json(500)
-      .json({ message: "Upsz something went wrong, please try again later!" });
+    console.log(error);
+    res.status(500).json({message: "Error occured, please try again later!"})
   }
-});
+})
 
-app.delete("/api/v1/question/:_id", async (req, res) => {
+
+app.delete("/api/v2/country/id/:_id", async (req,res) => {
   try {
-    await QuestionsModel.findByIdAndDelete(req.params._id)
+      await CountryModel.findOneAndDelete(
+        {_id: req.params._id},
+      )
 
-    res.status(200).json({message: "Question have been deleted!"})
+      res.json({message: "The selected country have been deleted!"})
   } catch (error) {
-    res
-      .json(500)
-      .json({ message: "Upsz something went wrong, please try again later!" });
+    console.log(error);
+    res.status(500).json({message: "Error occured, please try again later!"})
   }
-});
+})
 
 
-
-
-mongoose
-  .connect(process.env.CONSTRING)
-  .then(() => {
-    console.log("Successfully connected to database!");
-    app.listen(3000, () => {
-      console.log("App is runnint at port: 3000");
-    });
+mongoose.connect(process.env.CONSTRING).then(() => {
+  app.listen(process.env.BACKEND_PORT , () => {
+    console.log("Backend is runnong at port: " + process.env.BACKEND_PORT);
   })
-  .catch((err) => {
-    console.log(err);
-  });
+}).catch((err) => {
+  console.log("CANNOT CONNECT TO THE DATABASE!!!");
+  console.log(err);
+})
