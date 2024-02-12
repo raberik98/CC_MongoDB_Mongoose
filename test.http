@@ -1,0 +1,46 @@
+###
+GET http://localhost:3000/api/v1/question
+
+
+###
+GET http://localhost:3000/api/v1/question/65ae4205564db211c2b9b144
+
+
+###
+POST http://localhost:3000/api/v1/question
+Content-Type: application/json
+
+{
+    "title": "Do you like React?",
+    "description": "Any oppinions?"
+}
+
+
+###
+PATCH http://localhost:3000/api/v1/question/65ae43233e7d86757ca94127
+Content-Type: application/json
+
+{
+    "description": "Please share your thoughts. :) :)"
+}
+
+
+###
+POST http://localhost:3000/api/v1/answer/65ae43233e7d86757ca94127
+Content-Type: application/json
+
+{
+ "answer": "Irén: Piece of cake!"
+}
+
+
+###
+PATCH http://localhost:3000/api/v1/answer/65ae43233e7d86757ca94127/65ae465298b249e8d0cfa186
+Content-Type: application/json
+
+{
+ "answer": "Viki: Hard stuff!"
+}
+
+###
+DELETE  http://localhost:3000/api/v1/question/65ae45285bab6fcc1bc7e738

@@ -1,81 +1,150 @@
 import express from "express";
 import mongoose from "mongoose";
 import env from "dotenv";
-import Questions from "./models/Questions.js";
 // import CONSTRING from "./env.js";
 env.config();
+import QuestionsModel from "./models/Questions.model.js";
 
 const app = express();
 
 app.use(express.json());
 
-app.get("/api/getAllQuestions", async (req,res) => {
+app.get("/api/v1/question", async (req, res) => {
   try {
-    const questions = await Questions.find({})
-    res.json(questions)
-  } catch (error) {
-    res.status(500).json({message: "Unexpected error occured"})
-  }
-})
+    const data = await QuestionsModel.find();
 
-app.get("/api/getSpecificQuestion/:_id", async (req,res) => {
+    res.json(data);
+  } catch (error) {
+    res
+      .json(500)
+      .json({ message: "Upsz something went wrong, please try again later!" });
+  }
+});
+
+app.get("/api/v1/question/:_id", async (req, res) => {
   try {
-    const data = await Questions.findOne({_id: req.params._id})
+    const data = await QuestionsModel.findOne({_id: req.params._id});
+    // const data = await QuestionsModel.findById(req.params._id);
 
-    res.json(data)
+    res.json(data);
   } catch (error) {
-    console.log(error);
-    res.status(500).json({message: "Unexpected error occured"})
+    res
+      .json(500)
+      .json({ message: "Upsz something went wrong, please try again later!" });
   }
-})
+});
 
-app.post("/api/askQuestion", async (req,res) => {
+app.post("/api/v1/question", async (req, res) => {
   try {
-    let newQuestion = await Questions.create(req.body)
-    res.json(newQuestion)
-  } catch (error) {
-    console.log(error);
-    res.status(500).json({message: "Unexpected error occured"})
-  }
-})
+    // const newData = {
+    //   title: req.body.title,
+    //   description: req.body.description
+    // }
+    // await QuestionsModel.create(newData)
 
-app.post("/api/postAnswer/:questionId", async (req,res) => {
+    const newData = new QuestionsModel({
+      title: req.body.title,
+      description: req.body.description
+    })
+
+    await newData.save()
+
+    res.status(201).json({message: "Successfully added a question"})
+  } catch (error) {
+    res
+      .json(500)
+      .json({ message: "Upsz something went wrong, please try again later!" });
+  }
+});
+
+app.patch("/api/v1/question/:_id", async (req, res) => {
   try {
-    // const currentQuestion = await Questions.findById(req.params.questionId)
-    // currentQuestion.answers.push(req.body)
-    // await currentQuestion.save()
+    
+    const editedData = await QuestionsModel.findOneAndUpdate(
+      {_id: req.params._id},
+      {description: req.body.description},
+      {new: true}
+    )
 
-    const currentQuestion = await Questions.findByIdAndUpdate(
-        req.params.questionId,
-        {$push: { answers: req.body }},
-        {new: true}
-      )
-
-    res.json(currentQuestion)
+    res.status(200).json(editedData)
   } catch (error) {
-    console.log(error);
-    res.status(500).json({message: "Unexpected error occured"})
+    res
+      .json(500)
+      .json({ message: "Upsz something went wrong, please try again later!" });
   }
-})
+});
 
-app.delete("/api/deleteQuestion/:questionId", async (req,res) => {
+app.post("/api/v1/answer/:_id", async (req, res) => {
   try {
-    await Questions.findOneAndDelete({_id: req.params.questionId})
-    res.json({message: "Deleted"})
+    
+    // const editedData = await QuestionsModel.findByIdAndUpdate(
+    //   req.params._id,
+    //   { $push: { answers: { answerText: req.body.answer } } },
+    //   {new: true}
+    // )
+
+    const editThis = await QuestionsModel.findById(req.params._id)
+
+    editThis.answers.push({ answerText: req.body.answer })
+
+    await editThis.save()
+
+    res.status(200).json(editThis)
   } catch (error) {
-    console.log(error);
-    res.status(500).json({message: "Unexpected error occured"})
+    res
+      .json(500)
+      .json({ message: "Upsz something went wrong, please try again later!" });
   }
-})
+});
+
+app.patch("/api/v1/answer/:questionId/:answerId", async (req, res) => {
+  try {
+    
+    // const editedData = await QuestionsModel.findByIdAndUpdate(
+    //   req.params._id,
+    //   { $push: { answers: { answerText: req.body.answer } } },
+    //   {new: true}
+    // )
+
+    const editThis = await QuestionsModel.findById(req.params.questionId)
+
+    const editThisAnswer = editThis.answers.find((nextAnswer) => nextAnswer._id == req.params.answerId)
+
+    editThisAnswer.answerText = req.body.answer
+
+    await editThis.save()
+
+    res.status(200).json(editThis)
+  } catch (error) {
+    res
+      .json(500)
+      .json({ message: "Upsz something went wrong, please try again later!" });
+  }
+});
+
+app.delete("/api/v1/question/:_id", async (req, res) => {
+  try {
+    await QuestionsModel.findByIdAndDelete(req.params._id)
+
+    res.status(200).json({message: "Question have been deleted!"})
+  } catch (error) {
+    res
+      .json(500)
+      .json({ message: "Upsz something went wrong, please try again later!" });
+  }
+});
 
 
 
-mongoose.connect(process.env.CONSTRING).then(() => {
-  console.log("Connected to database!");
-  app.listen(process.env.BACKEND_PORT, () => {
-    console.log("App is running on port: 3000");
+
+mongoose
+  .connect(process.env.CONSTRING)
+  .then(() => {
+    console.log("Successfully connected to database!");
+    app.listen(3000, () => {
+      console.log("App is runnint at port: 3000");
+    });
   })
-}).catch((err) => {
-  console.log(err);
-})
-
+  .catch((err) => {
+    console.log(err);
+  });

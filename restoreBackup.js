@@ -1,53 +1,42 @@
 import mongoose from "mongoose";
-import fs from "fs"
-import env from "dotenv";
-import Questions from "./models/Questions.js";
-env.config();
+import QuestionsModel from "./models/Questions.model.js";
+import fs from "fs/promises"
+import CONSTRING from "./env.js"
 
-async function main() {
-
+async function Main() {
     try {
-        await mongoose.connect(process.env.CONSTRING)
-        console.log("Successfully connected to the database!");
+        await mongoose.connect(CONSTRING)
+        console.log("Connected to database!");
 
-        fs.readFile("./backup/QuestionsBackup.json", "utf-8", async (err,data) => {
-            if (err) {
-                console.log(err);
-            }else {
-                console.log("Successfully read the file");
+        const unparsedData = await fs.readFile("./backup/backupQuestions.json", "utf-8")
+        console.log("Read backup from file!");
 
-                const parsedData = JSON.parse(data)
+        const data = JSON.parse(unparsedData)
+        console.log("Parsed the data!");
 
-                const editedData = parsedData.map((item) => {
-                    return {
-                        questionTitle: item.questionTitle, 
-                        name: item.name,
-                        date: item.date,
-                        answers: item.answers.map((answerItem) => { return { 
-                            answerText: answerItem.answerText,
-                            answerName: answerItem.answerName 
-                        } })
-                    }
-                })
-
-                console.log("Data fromating successful!");
-
-                await Questions.deleteMany()
-                console.log("Database cleared!");
-
-                await Questions.create(editedData)
-                console.log("Backup restored!");
-
-                await mongoose.disconnect()
-                console.log("Disconnected from database!");
+        const editedData = data.map((nextData) => {
+            return {
+                title: nextData.title,
+                description: nextData.description,
+                date: nextData.date,
+                answers: nextData.answers.map(nextAnswer => ( { answerText: nextAnswer.answerText, date: nextAnswer.date} ))
             }
         })
+        console.log("Edited the data!");
 
+        await QuestionsModel.deleteMany()
+        console.log("Cleared the database!");
+
+        await QuestionsModel.create(editedData)
+        console.log("Restored backup!");
+
+        await mongoose.disconnect()
+        console.log("Disconnected from database!");
+
+        console.log("Yaaay backup restored!");
     } catch (error) {
-        console.log("ERROR: ", error);
+        console.log(`---ERROR: ${error}`);   
     }
-
-
 }
 
-main()
+Main()
