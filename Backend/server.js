@@ -2,12 +2,22 @@ import express from "express";
 import mongoose from "mongoose";
 import env from "dotenv";
 import CountryModel from "./models/Country.Model.js";
+import path from "path";
+import { fileURLToPath } from "url";
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // import CONSTRING from "./env.js";
 env.config();
 
 const app = express();
 
 app.use(express.json());
+
+
+app.use("/assets/", express.static(`${__dirname}/dist/assets/`));
+
+app.get("/", (req, res, next) => {
+    res.sendFile(path.join(`${__dirname}/dist/index.html`));
+})
 
 app.get("/api/v1/country/all", async (req,res) => {
   try {
